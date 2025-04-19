@@ -6,38 +6,24 @@
 [![Latest Release](https://img.shields.io/github/v/tag/evandarwin/docker-phpbb?label=version)](https://github.com/evandarwin/docker-phpbb/releases)
 [![Docker Stars](https://img.shields.io/docker/stars/evandarwin/phpbb.svg)](https://hub.docker.com/r/evandarwin/phpbb)
 
-A modern Docker container for phpBB with improved security, multiple database support, and automatic
-configuration.
+Looking for a modern, secure, and hassle-free way to run phpBB in Docker? You've found it! This
+image offers a thoughtfully pre-configured phpBB environment that's ready for production use with
+minimal setup.
 
-## Supported Tags
+## Why Choose This Image?
 
-- `latest` - Latest phpBB version
-- `<version>` - Specific phpBB version (e.g., `3.3.15`)
-- `<major>.<minor>` - Latest patch version of a minor release (e.g., `3.3`)
-- `<major>` - Latest minor.patch version of a major release (e.g., `3`)
+After Bitnami/Broadcom deprecated their official phpBB container (which had become outdated), I
+created this project to give the community a modern alternative that prioritizes:
 
-All images are built on Alpine Linux for minimal size and maximum security. Release jobs run daily
-to ensure the latest versions and security updates are always available.
+- **Security**: Runs as non-root, includes hardened Nginx config, secure headers, and protection
+  against common attacks
+- **Performance**: Pre-configured with PHP opcache, Nginx (instead of Apache), and optimized
+  settings
+- **Simplicity**: Works out-of-the-box with sensible defaults while remaining highly customizable
+- **Flexibility**: Supports MySQL, PostgreSQL, and SQLite with easy configuration
+- **Currency**: Daily builds ensure you always have the latest phpBB version and security patches
 
-## Why This Project Exists
-
-This project was created to maintain a modern version of the phpBB container after Bitnami/Broadcom
-deprecated their official phpBB container, which had become extremely outdated. This container
-ensures you can continue to run phpBB in Docker with current, supported versions and improved
-security.
-
-## Key Features
-
-- **Auto-configuration** through environment variables
-- **Pre-configured with PHP opcache** for improved performance
-- **Nginx over Apache** for improved performance and security
-- **Preconfigured with security best practices**
-- **Support for MySQL, PostgreSQL, and SQLite** database drivers
-- **Non-root execution** for enhanced container security
-- **Persistent data storage** with volume mounting options
-- **Custom PHP configuration** through environment variables
-
-## Quick Start
+## Quick Start (It's Really That Easy!)
 
 ```bash
 docker run -d \
@@ -50,6 +36,45 @@ docker run -d \
   -e PHPBB_DATABASE_PASSWORD="secret" \
   evandarwin/phpbb:latest
 ```
+
+Then just open http://localhost:8080 in your browser, and you're ready to go!
+
+## Available Tags
+
+- `latest` - Latest phpBB version with all the good stuff
+- `<version>` - Specific phpBB version (e.g., `3.3.15`)
+- `<major>.<minor>` - Latest patch version of a minor release (e.g., `3.3`)
+- `<major>` - Latest minor.patch version of a major release (e.g., `3`)
+
+All images are built on Alpine Linux for minimal size and maximum security.
+
+## Pre-Configured Features You'll Love
+
+This image comes with numerous thoughtful pre-configurations that save you time and enhance
+security:
+
+### 🛡️ Security Enhancements
+
+- **Defense in Depth**: Multiple layers of protection including:
+  - Non-root execution with proper file permissions
+  - Protection against common web attacks
+  - Nginx configuration to protect sensitive files and directories
+  - Disabled dangerous PHP functions like `exec` and `shell_exec`
+  - Open basedir restrictions to limit file access
+
+### ⚡ Performance Optimizations
+
+- **PHP Opcache**: Pre-configured for optimal performance
+- **Nginx**: Lightweight and fast web server with optimized settings
+- **Static File Caching**: Properly configured for optimal browser caching
+- **Tuned PHP Settings**: Balanced for good performance while maintaining stability
+
+### 🧰 Convenience Features
+
+- **Auto-configuration**: Just set environment variables and go
+- **Multi-DB Support**: Choose MySQL, PostgreSQL, or SQLite based on your needs
+- **Health Checks**: Built-in container health monitoring
+- **Smart Defaults**: Works out-of-the-box, but remains highly customizable
 
 ## Required Environment Variables
 
@@ -141,15 +166,15 @@ The following environment variables can be used to configure the phpBB installat
 
 There are two main approaches to persist your phpBB data:
 
-### 1. Volume Mounting
+### 1. Simple Volume Mounting (Recommended)
 
-You can mount a volume at `/opt/phpbb` to persist all phpBB files, which includes your forum's data,
-themes, extensions, and configurations:
+Mount a single volume to keep everything in one place:
 
 ```bash
 docker run -d \
   -p 8080:8080 \
   -v phpbb_data:/opt/phpbb \
+  -e PHPBB_FORUM_NAME="My Awesome Forum" \
   -e PHPBB_DATABASE_HOST="db" \
   -e PHPBB_DATABASE_NAME="phpbb" \
   -e PHPBB_DATABASE_USER="phpbb" \
@@ -157,11 +182,9 @@ docker run -d \
   evandarwin/phpbb:latest
 ```
 
-This approach is recommended for most users as it persists all phpBB files.
+### 2. Granular Control with Multiple Volumes
 
-### 2. Selectively Mount Important Directories
-
-Alternatively, you can mount specific directories that contain important user data:
+For more control over specific data directories:
 
 ```bash
 docker run -d \
@@ -177,8 +200,6 @@ docker run -d \
   -e PHPBB_DATABASE_PASSWORD="secret" \
   evandarwin/phpbb:latest
 ```
-
-This approach gives you more granular control over which parts of phpBB are persisted.
 
 ## Custom PHP Configuration
 
@@ -203,9 +224,9 @@ max_execution_time = 60" \
 
 These directives will be appended to the PHP.ini file during container startup.
 
-## Examples
+## Real-World Examples
 
-### Basic Setup with MySQL
+### MySQL Setup (Most Common)
 
 ```bash
 docker run -d \
@@ -220,7 +241,7 @@ docker run -d \
   evandarwin/phpbb:latest
 ```
 
-### Setup with PostgreSQL
+### PostgreSQL Setup
 
 ```bash
 docker run -d \
@@ -235,7 +256,7 @@ docker run -d \
   evandarwin/phpbb:latest
 ```
 
-### Setup with SQLite and Data Persistence
+### SQLite Setup (Great for Small Forums)
 
 ```bash
 docker run -d \
@@ -247,7 +268,7 @@ docker run -d \
   evandarwin/phpbb:latest
 ```
 
-### Setup with Email Configuration
+### Complete Setup with Email
 
 ```bash
 docker run -d \
@@ -281,7 +302,7 @@ PHPBB_VERSION=3.3.10 ./scripts/build.sh
 The build script automatically fetches the latest phpBB release version from GitHub if you don't
 specify a version.
 
-## Docker Compose Example
+## Docker Compose Example (Production-Ready)
 
 Here's a complete example using Docker Compose with MySQL:
 
@@ -387,39 +408,15 @@ services:
       - 'traefik.http.routers.phpbb.tls=true'
 ```
 
-## Security
+## Security Best Practices
 
-This Docker image runs phpBB as a non-root user for improved security and implements additional
-security best practices.
+This Docker image implements numerous security best practices:
 
-## Security Features
-
-This container implements several security best practices:
-
-### Web Server Security
-
-- **Non-root user**: The container runs as a non-privileged `phpbb` user
-- **Rate limiting**: Login pages are protected against brute force attacks
-- **Enhanced security headers**: Includes Content-Security-Policy, X-Frame-Options, and other
-  security headers
-- **Disabled PHP functions**: Dangerous PHP functions like `exec` and `shell_exec` are disabled
-- **Secure file permissions**: Proper permission settings for all phpBB files and directories
-
-### PHP Security
-
-- PHP is configured with:
-  - `open_basedir` restrictions to limit file access
-  - Disabled exposure of PHP version information
-  - Memory limits and execution time restrictions
-  - File upload size limitations
-  - PHP 8.3+ for latest security patches
-
-### Nginx Configuration
-
-- Protected sensitive directories and files from direct access
-- Properly configured static file caching
-- IP forwarding configured for proper logging behind proxies
-- Secure TLS configuration options available
+- **Non-root execution**: All processes run as a non-privileged user
+- **Security headers**: Comprehensive set of headers to protect against XSS, clickjacking, and more
+- **Protected sensitive files**: Nginx blocks access to configuration and system files
+- **PHP hardening**: Restricted functions, open_basedir limitations, and proper error handling
+- **Secure default settings**: Sensible security defaults that don't sacrifice usability
 
 ## SQLite Database Security
 
@@ -427,6 +424,10 @@ This container implements several security best practices:
 
 When using SQLite as your database driver, it's **critically important** to store your database file
 outside of the publicly accessible web directory.
+
+The launcher script will reject it by default if it detects it; but... you know users. We also make
+a best effort to prevent distributing files with database extensions at all, denied through the
+nginx configuration (.sql, .db, et al).
 
 #### Security Risks
 
@@ -483,15 +484,15 @@ properly. The health check:
 This is particularly useful when using the container with orchestration systems like Docker Swarm,
 Kubernetes, or Docker Compose with health checks.
 
-## Troubleshooting
+## Troubleshooting Tips
 
-### Common Issues
+### Common Issues and Solutions
 
 1. **Database Connection Errors**:
 
-   - Verify your database credentials are correct
-   - Ensure the database server is accessible from the phpBB container
-   - For external databases, check network connectivity and firewall rules
+   - Double-check your database credentials and connection settings
+   - Verify network connectivity between containers
+   - For MySQL, ensure the user has proper privileges
 
 2. **Permission Issues**:
 
@@ -522,7 +523,9 @@ docker logs --tail 100 <container_name>
 docker logs -f <container_name>
 ```
 
-## Contributing
+## Need Help or Want to Contribute?
 
-Contributions to improve this Docker image are welcome! Please submit issues or pull requests to the
-project repository.
+Contributions are always welcome! Whether it's reporting bugs, suggesting features, or submitting
+pull requests, your input helps make this project better for everyone.
+
+If you're using this image in production, I'd love to hear about your experience!
