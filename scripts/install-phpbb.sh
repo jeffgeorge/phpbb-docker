@@ -9,7 +9,7 @@ set -u
 
 # Custom echo function for consistent prefixing
 log() {
-  echo "[phpbb-docker] $1"
+  echo "[$(hostname)] $1"
 }
 
 # Centralized error handler

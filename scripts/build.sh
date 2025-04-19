@@ -4,13 +4,13 @@ set -e
 
 # Custom echo function for consistent prefixing
 log() {
-  echo "[phpbb-docker] $1"
+  echo "[$(hostname)] $1"
 }
 
 # Debug function - only prints if DEBUG=true
 debug() {
   if [ "${DEBUG:-false}" = "true" ]; then
-    echo "[phpbb-docker-debug] $1"
+    echo "[$(hostname)-debug] $1"
   fi
 }
 

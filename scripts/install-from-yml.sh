@@ -1,6 +1,6 @@
 #!/bin/sh
 set -eu
-log() { echo "[phpbb-docker] $1"; }
+log() { echo "[$(hostname)] $1"; }
 trap 'log "ERROR at line $LINENO"; [ -n "${TEMP_DIR:-}" ] && rm -rf "$TEMP_DIR"' ERR
 
 # Check required vars and fail fast

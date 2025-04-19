@@ -2,7 +2,7 @@
 set -eu
 
 log() {
-  echo "[phpbb-docker] $1"
+  echo "[$(hostname)] $1"
 }
 
 handle_error() {
