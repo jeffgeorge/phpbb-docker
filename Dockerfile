@@ -42,8 +42,10 @@ RUN addgroup -S phpbb && \
     chown -R phpbb:phpbb ${PHPBB_ROOT}
 
 # Install required packages - using Alpine package format (php84-*)
+# Group packages by functionality for better organization
 RUN apk update && \
-    apk add --virtual .php8 --no-cache \
+    # Install PHP with required extensions
+    apk add --virtual .php-deps --no-cache \
     php${PHP_VERSION} \
     php${PHP_VERSION}-cli \
     php${PHP_VERSION}-fpm \
@@ -71,19 +73,17 @@ RUN apk update && \
     php${PHP_VERSION}-openssl \
     php${PHP_VERSION}-tokenizer \
     php${PHP_VERSION}-intl \
-    php${PHP_VERSION}-pecl-imagick \
-    freetype \
-    libjpeg-turbo \
-    libwebp \
+    php${PHP_VERSION}-pecl-imagick && \
+    apk add --no-cache \
     nginx \
     curl \
     unzip \
     libcap \
     ca-certificates \
-    # Database client utilities for connection testing
     mysql-client \
     postgresql-client \
-    sqlite
+    sqlite && \
+    rm -rf /var/cache/apk/*
 
 # Configure PHP-FPM and security settings
 RUN sed -i "s/user = nobody/user = phpbb/g" /etc/php${PHP_VERSION}/php-fpm.d/www.conf && \
@@ -139,8 +139,6 @@ RUN if [ -z "${PHPBB_VERSION}" ]; then \
     mkdir -p ${PHPBB_ROOT}/phpbb && \
     mv "phpBB3"/* ${PHPBB_ROOT}/phpbb/ && \
     rm -rf "phpBB3" && \
-    mkdir -p ${PHPBB_ROOT}/phpbb/config && \
-    touch ${PHPBB_ROOT}/phpbb/config/config.php && \
     chown -R phpbb:phpbb ${PHPBB_ROOT} && \
     chmod -v 0750 ${PHPBB_ROOT} ${PHPBB_ROOT}/phpbb ${PHPBB_ROOT}/phpbb/* && \
     mkdir -p ${PHPBB_ROOT}/phpbb/images/avatars/uploads && \
@@ -150,6 +148,10 @@ RUN if [ -z "${PHPBB_VERSION}" ]; then \
     find ${PHPBB_ROOT}/phpbb/cache -type d -exec chmod 750 {} \; && \
     find ${PHPBB_ROOT}/phpbb/store -type d -exec chmod 750 {} \; 2>/dev/null || true && \
     find ${PHPBB_ROOT}/phpbb/files -type d -exec chmod 750 {} \; 2>/dev/null || true && \
+    if [ -d "${PHPBB_ROOT}/phpbb/vendor" ]; then \
+    chmod -R 555 "${PHPBB_ROOT}/phpbb/vendor" && \
+    echo "SECURITY: Vendor directory is now properly protected (read-only)"; \
+    fi && \
     echo "phpBB ${PHPBB_VERSION} has been installed successfully!"
 
 # Set proper permissions for the scripts
@@ -159,7 +161,9 @@ RUN chmod 755 /opt/.docker/*.sh && \
     # Create SQLite database file with proper permissions
     touch ${PHPBB_ROOT}/phpbb.sqlite && \
     chown phpbb:phpbb ${PHPBB_ROOT}/phpbb.sqlite && \
-    chmod 0640 ${PHPBB_ROOT}/phpbb.sqlite
+    chmod 0640 ${PHPBB_ROOT}/phpbb.sqlite && \
+    # Cleanup unnecessary files
+    rm -rf /tmp/* /var/cache/apk/*
 
 # Set working directory
 WORKDIR ${PHPBB_ROOT}
