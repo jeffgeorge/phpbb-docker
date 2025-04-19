@@ -27,8 +27,8 @@ validate_environment() {
   
   # Generate secure password if not provided
   if [ -z "${PHPBB_PASSWORD:-}" ]; then
-    # Generate a secure 16-character password with OpenSSL
-    generated_password=$(openssl rand -base64 12)
+    # Generate a secure random password using /dev/urandom
+    generated_password=$(head -c 16 /dev/urandom | tr -dc 'a-zA-Z0-9!@#$%^&*()-_=+' | head -c 16)
     export PHPBB_PASSWORD="$generated_password"
     log "SECURITY NOTICE: Generated secure password for admin user: $generated_password"
     log "IMPORTANT: Write down this password now as it will not be shown again!"
