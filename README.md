@@ -77,47 +77,65 @@ persisted.
 
 The following environment variables can be used to configure the phpBB installation:
 
-| Variable                                           | Description                                                      | Default                      |
-| -------------------------------------------------- | ---------------------------------------------------------------- | ---------------------------- |
-| **Forum Configuration**                            |                                                                  |                              |
-| `PHPBB_FORUM_NAME`                                 | Name of the forum                                                | "My phpBB Forum"             |
-| `PHPBB_FORUM_DESCRIPTION`                          | Description of the forum                                         | "A phpBB Forum"              |
-| `PHPBB_LANGUAGE`                                   | Language for the phpBB installation                              | "en"                         |
-| **Admin User**                                     |                                                                  |                              |
-| `PHPBB_USERNAME`                                   | Username for the administrative user (Required)                  | "admin"                      |
-| `PHPBB_PASSWORD`                                   | Password for the admin user (Required)                           | "" (auto-generated if empty) |
-| `PHPBB_FIRST_NAME`                                 | First name of the admin user                                     | "Admin"                      |
-| `PHPBB_LAST_NAME`                                  | Last name of the admin user                                      | "User"                       |
-| `PHPBB_EMAIL`                                      | Admin user email                                                 | "admin@example.com"          |
-| **Database Configuration**                         |                                                                  |                              |
-| `PHPBB_DATABASE_DRIVER`                            | Database driver type (see note below)                            | "sqlite3"                    |
-| `PHPBB_DATABASE_HOST`                              | Database host address                                            | "localhost"                  |
-| `PHPBB_DATABASE_PORT`                              | Database port                                                    | "" (uses default port)       |
-| `PHPBB_DATABASE_NAME`                              | Database name                                                    | "phpbb"                      |
-| `PHPBB_DATABASE_USER` or `PHPBB_DATABASE_USERNAME` | Database username                                                | "phpbb_user"                 |
-| `PHPBB_DATABASE_PASSWORD` or `PHPBB_DATABASE_PASS` | Database password                                                | ""                           |
-| `PHPBB_DATABASE_SQLITE_PATH`                       | Full path for SQLite database file (used when driver is sqlite3) | "/opt/phpbb/phpbb.sqlite"    |
-| `PHPBB_TABLE_PREFIX`                               | Prefix for database tables                                       | "phpbb\_"                    |
+### Forum Configuration
 
-### Supported Database Drivers
+| Variable                  | Description                         | Default          |
+| ------------------------- | ----------------------------------- | ---------------- |
+| `PHPBB_FORUM_NAME`        | Name of the forum                   | "My phpBB Forum" |
+| `PHPBB_FORUM_DESCRIPTION` | Description of the forum            | "A phpBB Forum"  |
+| `PHPBB_LANGUAGE`          | Language for the phpBB installation | "en"             |
 
-phpBB supports the following database drivers:
+### Admin User
 
-- `mysqli` - MySQL/MariaDB (Note: Use `mysqli`, not `mysql` which is deprecated and will not work)
-- `postgres` - PostgreSQL
-- `sqlite3` - SQLite version a3
+| Variable           | Description                                     | Default                      |
+| ------------------ | ----------------------------------------------- | ---------------------------- |
+| `PHPBB_USERNAME`   | Username for the administrative user (Required) | "admin"                      |
+| `PHPBB_PASSWORD`   | Password for the admin user (Required)          | "" (auto-generated if empty) |
+| `PHPBB_FIRST_NAME` | First name of the admin user                    | "Admin"                      |
+| `PHPBB_LAST_NAME`  | Last name of the admin user                     | "User"                       |
+| `PHPBB_EMAIL`      | Admin user email                                | "admin@example.com"          |
 
-Be careful to use the exact driver names as specified above. In particular, note that you must use
-`mysqli` (not `mysql`) for MySQL/MariaDB databases, as the older `mysql` driver is not supported.
+### Database Configuration
 
-| **Email/SMTP Configuration** | | | | `SMTP_HOST` | SMTP server address | "" (disabled) | |
-`SMTP_PORT` | SMTP server port | "25" | | `SMTP_USER` | SMTP username | "" | | `SMTP_PASSWORD` |
-SMTP password | "" | | `SMTP_AUTH` | SMTP authentication method | "" | | `SMTP_PROTOCOL` | SMTP
-protocol | "" | | **Server Configuration** | | | | `SERVER_PROTOCOL` | Server protocol (http:// or
-https://) | "http://" | | `SERVER_NAME` | Server hostname | "localhost" | | `SERVER_PORT` | Server
-port | "80" | | `SCRIPT_PATH` | Base path for the phpBB installation | "/" | | `COOKIE_SECURE` |
-Whether to use secure cookies | "false" | | **PHP Configuration** | | | | `PHP_MEMORY_LIMIT` | PHP
-memory limit | "128M" | | `PHP_CUSTOM_INI` | Custom PHP.ini directives (multiple lines) | "" |
+| Variable                                           | Description                                                      | Default                   |
+| -------------------------------------------------- | ---------------------------------------------------------------- | ------------------------- |
+| `PHPBB_DATABASE_DRIVER`                            | Database driver type (see note below)                            | "sqlite3"                 |
+| `PHPBB_DATABASE_HOST`                              | Database host address                                            | "localhost"               |
+| `PHPBB_DATABASE_PORT`                              | Database port                                                    | "" (uses default port)    |
+| `PHPBB_DATABASE_NAME`                              | Database name                                                    | "phpbb"                   |
+| `PHPBB_DATABASE_USER` or `PHPBB_DATABASE_USERNAME` | Database username                                                | "phpbb_user"              |
+| `PHPBB_DATABASE_PASSWORD` or `PHPBB_DATABASE_PASS` | Database password                                                | ""                        |
+| `PHPBB_DATABASE_SQLITE_PATH`                       | Full path for SQLite database file (used when driver is sqlite3) | "/opt/phpbb/phpbb.sqlite" |
+| `PHPBB_TABLE_PREFIX`                               | Prefix for database tables                                       | "phpbb\_"                 |
+
+### Email / SMTP
+
+| Variable                     | Description                | Default       |
+| ---------------------------- | -------------------------- | ------------- |
+| **Email/SMTP Configuration** |                            |               |
+| `SMTP_HOST`                  | SMTP server address        | "" (disabled) |
+| `SMTP_PORT`                  | SMTP server port           | "25"          |
+| `SMTP_USER`                  | SMTP username              | ""            |
+| `SMTP_PASSWORD`              | SMTP password              | ""            |
+| `SMTP_AUTH`                  | SMTP authentication method | ""            |
+| `SMTP_PROTOCOL`              | SMTP protocol              | ""            |
+
+### HTTP Configuration
+
+| Variable          | Description                           | Default     |
+| ----------------- | ------------------------------------- | ----------- |
+| `SERVER_PROTOCOL` | Server protocol (http:// or https://) | "http://"   |
+| `SERVER_NAME`     | Server hostname                       | "localhost" |
+| `SERVER_PORT`     | Server port                           | "80"        |
+| `SCRIPT_PATH`     | Base path for the phpBB installation  | "/"         |
+| `COOKIE_SECURE`   | Whether to use secure cookies         | "false"     |
+
+### PHP Configuration
+
+| Variable           | Description                                | Default |
+| ------------------ | ------------------------------------------ | ------- |
+| `PHP_MEMORY_LIMIT` | PHP memory limit                           | "128M"  |
+| `PHP_CUSTOM_INI`   | Custom PHP.ini directives (multiple lines) | ""      |
 
 ## Data Persistence
 
