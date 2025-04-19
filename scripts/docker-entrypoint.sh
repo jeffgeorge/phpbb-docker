@@ -80,7 +80,7 @@ install_phpbb() {
 # Configure phpBB if not already configured
 configure_phpbb() {
   # Check if config.php exists and is not empty
-  if [ ! -f "${PHPBB_ROOT:-/opt/phpbb}/phpbb/config/config.php" ] || [ ! -s "${PHPBB_ROOT:-/opt/phpbb}/phpbb/config/config.php" ]; then
+  if [ ! -f "${PHPBB_ROOT:-/opt/phpbb}/phpbb/config.php" ] || [ ! -s "${PHPBB_ROOT:-/opt/phpbb}/phpbb/config.php" ]; then
     log "Configuration file not found or is empty, running YML-based installer..."
     if ! /opt/.docker/install-from-yml.sh; then
       log "ERROR: Failed to configure phpBB. Exiting container."
