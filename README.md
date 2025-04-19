@@ -34,6 +34,11 @@ This container requires the following environment variables to be set for proper
 
 These variables are mandatory for generating the database during first initialization.
 
+> **Note about password generation**: If `PHPBB_PASSWORD` is omitted, a secure random password will
+> be automatically generated and printed in the console logs during first startup. Be sure to check
+> the logs with `docker logs container_name` to retrieve this password, as it will only be shown
+> once and cannot be recovered later.
+
 ## Key Features
 
 - **Auto-configuration** through environment variables
@@ -50,6 +55,7 @@ These variables are mandatory for generating the database during first initializ
 ```bash
 docker run -d \
   -p 8080:8080 \
+  -v phpbb_data:/opt/phpbb \
   -e PHPBB_FORUM_NAME="My Awesome Forum" \
   -e PHPBB_DATABASE_HOST="db" \
   -e PHPBB_DATABASE_NAME="phpbb" \
@@ -151,6 +157,7 @@ environment variable:
 ```bash
 docker run -d \
   -p 8080:8080 \
+  -v phpbb_data:/opt/phpbb \
   -e PHPBB_FORUM_NAME="My Community" \
   -e PHPBB_DATABASE_HOST="mysql_container" \
   -e PHPBB_DATABASE_NAME="phpbb_db" \
@@ -172,6 +179,7 @@ These directives will be appended to the PHP.ini file during container startup.
 ```bash
 docker run -d \
   -p 8080:8080 \
+  -v phpbb_data:/opt/phpbb \
   -e PHPBB_FORUM_NAME="My Community" \
   -e PHPBB_DATABASE_DRIVER="mysqli" \
   -e PHPBB_DATABASE_HOST="mysql_container" \
@@ -186,6 +194,7 @@ docker run -d \
 ```bash
 docker run -d \
   -p 8080:8080 \
+  -v phpbb_data:/opt/phpbb \
   -e PHPBB_FORUM_NAME="My Community" \
   -e PHPBB_DATABASE_DRIVER="postgres" \
   -e PHPBB_DATABASE_HOST="postgres_container" \
@@ -212,6 +221,7 @@ docker run -d \
 ```bash
 docker run -d \
   -p 8080:8080 \
+  -v phpbb_data:/opt/phpbb \
   -e PHPBB_FORUM_NAME="My Community" \
   -e PHPBB_EMAIL="admin@example.com" \
   -e SMTP_HOST="smtp.example.com" \
@@ -479,36 +489,6 @@ docker logs --tail 100 <container_name>
 
 # Follow logs in real-time
 docker logs -f <container_name>
-```
-
-## Automated Builds with GitHub Actions
-
-This project uses GitHub Actions to automatically build and publish Docker images to Docker Hub. The
-workflow includes:
-
-- Building multi-architecture images (amd64, arm64)
-- Signing images with Cosign for supply chain security
-- Generating Software Bill of Materials (SBOM)
-- Vulnerability scanning with Trivy
-- Automated version detection from phpBB releases
-
-### Setting up GitHub Secrets
-
-To enable the automated build workflow, you need to set up the following GitHub repository secrets:
-
-1. `DOCKER_HUB_USERNAME` - Your Docker Hub username
-2. `DOCKER_HUB_TOKEN` - A Docker Hub access token (not your password)
-
-You can create a Docker Hub access token by going to your Docker Hub account settings > Security >
-New Access Token.
-
-### Verifying Image Signatures
-
-Images built by this workflow are automatically signed using Cosign. You can verify the signature of
-an image using:
-
-```bash
-cosign verify --key cosign.pub evandarwin/phpbb:latest
 ```
 
 ## Contributing
