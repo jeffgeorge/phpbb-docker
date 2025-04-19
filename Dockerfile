@@ -79,7 +79,11 @@ RUN apk update && \
     curl \
     unzip \
     libcap \
-    ca-certificates
+    ca-certificates \
+    # Database client utilities for connection testing
+    mysql-client \
+    postgresql-client \
+    sqlite
 
 # Configure PHP-FPM and security settings
 RUN sed -i "s/user = nobody/user = phpbb/g" /etc/php${PHP_VERSION}/php-fpm.d/www.conf && \

@@ -16,7 +16,8 @@ configuration.
 - `<major>.<minor>` - Latest patch version of a minor release (e.g., `3.3`)
 - `<major>` - Latest minor.patch version of a major release (e.g., `3`)
 
-All images are built on Alpine Linux for minimal size and maximum security.
+All images are built on Alpine Linux for minimal size and maximum security. Release jobs run daily
+to ensure the latest versions and security updates are always available.
 
 ## Why This Project Exists
 
@@ -24,20 +25,6 @@ This project was created to maintain a modern version of the phpBB container aft
 deprecated their official phpBB container, which had become extremely outdated. This container
 ensures you can continue to run phpBB in Docker with current, supported versions and improved
 security.
-
-## Required Environment Variables
-
-This container requires the following environment variables to be set for proper operation:
-
-- `PHPBB_USERNAME`: Username for the administrative user (required for first installation)
-- `PHPBB_PASSWORD`: Password for the administrative user (required for first installation)
-
-These variables are mandatory for generating the database during first initialization.
-
-> **Note about password generation**: If `PHPBB_PASSWORD` is omitted, a secure random password will
-> be automatically generated and printed in the console logs during first startup. Be sure to check
-> the logs with `docker logs container_name` to retrieve this password, as it will only be shown
-> once and cannot be recovered later.
 
 ## Key Features
 
@@ -64,6 +51,28 @@ docker run -d \
   evandarwin/phpbb:latest
 ```
 
+## Required Environment Variables
+
+This container requires the following environment variables to be set for proper operation:
+
+- `PHPBB_USERNAME`: Username for the administrative user (required for first installation)
+- `PHPBB_PASSWORD`: Password for the administrative user (required for first installation)
+
+These variables are mandatory for generating the database during first initialization.
+
+> **Note about password generation**: If `PHPBB_PASSWORD` is omitted, a secure random password will
+> be automatically generated and printed in the console logs during first startup. Be sure to check
+> the logs with `docker logs container_name` to retrieve this password, as it will only be shown
+> once and cannot be recovered later.
+>
+> **Important**: phpBB has a maximum password length of 30 characters. Passwords longer than this
+> will be rejected during user creation.
+
+By default, the container uses a SQLite database configuration that is automatically written to the
+mounted volume at `/opt/phpbb/phpbb.sqlite` unless you specify a different database configuration.
+This provides a simple setup with minimal configuration while ensuring your data is properly
+persisted.
+
 ## Environment Variables
 
 The following environment variables can be used to configure the phpBB installation:
@@ -81,7 +90,7 @@ The following environment variables can be used to configure the phpBB installat
 | `PHPBB_LAST_NAME`                                  | Last name of the admin user                                      | "User"                       |
 | `PHPBB_EMAIL`                                      | Admin user email                                                 | "admin@example.com"          |
 | **Database Configuration**                         |                                                                  |                              |
-| `PHPBB_DATABASE_DRIVER`                            | Database driver type (mysqli, postgres, sqlite3)                 | "sqlite3"                    |
+| `PHPBB_DATABASE_DRIVER`                            | Database driver type (see note below)                            | "sqlite3"                    |
 | `PHPBB_DATABASE_HOST`                              | Database host address                                            | "localhost"                  |
 | `PHPBB_DATABASE_PORT`                              | Database port                                                    | "" (uses default port)       |
 | `PHPBB_DATABASE_NAME`                              | Database name                                                    | "phpbb"                      |
@@ -89,22 +98,26 @@ The following environment variables can be used to configure the phpBB installat
 | `PHPBB_DATABASE_PASSWORD` or `PHPBB_DATABASE_PASS` | Database password                                                | ""                           |
 | `PHPBB_DATABASE_SQLITE_PATH`                       | Full path for SQLite database file (used when driver is sqlite3) | "/opt/phpbb/phpbb.sqlite"    |
 | `PHPBB_TABLE_PREFIX`                               | Prefix for database tables                                       | "phpbb\_"                    |
-| **Email/SMTP Configuration**                       |                                                                  |                              |
-| `SMTP_HOST`                                        | SMTP server address                                              | "" (disabled)                |
-| `SMTP_PORT`                                        | SMTP server port                                                 | "25"                         |
-| `SMTP_USER`                                        | SMTP username                                                    | ""                           |
-| `SMTP_PASSWORD`                                    | SMTP password                                                    | ""                           |
-| `SMTP_AUTH`                                        | SMTP authentication method                                       | ""                           |
-| `SMTP_PROTOCOL`                                    | SMTP protocol                                                    | ""                           |
-| **Server Configuration**                           |                                                                  |                              |
-| `SERVER_PROTOCOL`                                  | Server protocol (http:// or https://)                            | "http://"                    |
-| `SERVER_NAME`                                      | Server hostname                                                  | "localhost"                  |
-| `SERVER_PORT`                                      | Server port                                                      | "80"                         |
-| `SCRIPT_PATH`                                      | Base path for the phpBB installation                             | "/"                          |
-| `COOKIE_SECURE`                                    | Whether to use secure cookies                                    | "false"                      |
-| **PHP Configuration**                              |                                                                  |                              |
-| `PHP_MEMORY_LIMIT`                                 | PHP memory limit                                                 | "128M"                       |
-| `PHP_CUSTOM_INI`                                   | Custom PHP.ini directives (multiple lines)                       | ""                           |
+
+### Supported Database Drivers
+
+phpBB supports the following database drivers:
+
+- `mysqli` - MySQL/MariaDB (Note: Use `mysqli`, not `mysql` which is deprecated and will not work)
+- `postgres` - PostgreSQL
+- `sqlite3` - SQLite version a3
+
+Be careful to use the exact driver names as specified above. In particular, note that you must use
+`mysqli` (not `mysql`) for MySQL/MariaDB databases, as the older `mysql` driver is not supported.
+
+| **Email/SMTP Configuration** | | | | `SMTP_HOST` | SMTP server address | "" (disabled) | |
+`SMTP_PORT` | SMTP server port | "25" | | `SMTP_USER` | SMTP username | "" | | `SMTP_PASSWORD` |
+SMTP password | "" | | `SMTP_AUTH` | SMTP authentication method | "" | | `SMTP_PROTOCOL` | SMTP
+protocol | "" | | **Server Configuration** | | | | `SERVER_PROTOCOL` | Server protocol (http:// or
+https://) | "http://" | | `SERVER_NAME` | Server hostname | "localhost" | | `SERVER_PORT` | Server
+port | "80" | | `SCRIPT_PATH` | Base path for the phpBB installation | "/" | | `COOKIE_SECURE` |
+Whether to use secure cookies | "false" | | **PHP Configuration** | | | | `PHP_MEMORY_LIMIT` | PHP
+memory limit | "128M" | | `PHP_CUSTOM_INI` | Custom PHP.ini directives (multiple lines) | "" |
 
 ## Data Persistence
 

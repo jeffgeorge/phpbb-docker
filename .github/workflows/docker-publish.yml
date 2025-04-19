@@ -10,6 +10,9 @@ on:
     branches: 
       - main
   workflow_dispatch:
+  schedule:
+    # Run daily to ensure latest build is available
+    - cron: '0 0 * * *'
 
 # Add concurrency to cancel duplicate runs
 concurrency:
@@ -28,6 +31,11 @@ jobs:
       id-token: write # Required for SLSA provenance
       security-events: write # For uploading SARIF results
       actions: read
+
+    # Only run scheduled jobs on the main repository
+    if: >-
+      github.event_name != 'schedule' || 
+      (github.event_name == 'schedule' && github.repository == 'evandarwin/docker-phpbb')
 
     steps:
       - name: Checkout repository

@@ -15,8 +15,8 @@ PHPBB_ROOT="${PHPBB_ROOT:-/opt/phpbb}"
 PHP_EXECUTABLE=$(command -v "php${PHP_VERSION:-}" 2>/dev/null || command -v php || { log "ERROR: PHP not found"; exit 1; })
 TEMP_DIR=$(mktemp -d) && chmod 700 "$TEMP_DIR" && CONFIG_YML="${TEMP_DIR}/config.yml"
 
-# Database validation
-validate_db() {
+# Database validation of configuration params
+validate_db_config() {
   local driver="${PHPBB_DATABASE_DRIVER:-sqlite3}"
   case "$driver" in
     mysqli)
@@ -78,6 +78,113 @@ validate_db() {
   return 0
 }
 
+# Test database connection before installation
+test_db_connection() {
+  local driver="${PHPBB_DATABASE_DRIVER:-sqlite3}"
+  local host="${PHPBB_DATABASE_HOST:-localhost}"
+  local port="${PHPBB_DATABASE_PORT:-}"
+  local user="${PHPBB_DATABASE_USER:-${PHPBB_DATABASE_USERNAME:-phpbb_user}}"
+  local pass="${PHPBB_DATABASE_PASSWORD:-${PHPBB_DATABASE_PASS:-}}"
+  local name="${PHPBB_DATABASE_NAME:-phpbb}"
+  local db_path="${PHPBB_DATABASE_SQLITE_PATH:-/phpbb.sqlite}"
+  
+  log "Testing database connection with driver: $driver"
+  
+  case "$driver" in
+    mysqli)
+      # Set default MySQL port if not specified
+      [ -z "$port" ] && port="3306"
+      
+      if command -v mysql > /dev/null 2>&1; then
+        log "Testing MySQL connection to $host:$port..."
+        if ! mysql -h "$host" -P "$port" -u "$user" ${pass:+-p"$pass"} -e "SELECT 1" > /dev/null 2>&1; then
+          log "ERROR: Failed to connect to MySQL database"
+          return 1
+        fi
+        
+        # Test if database exists or we can create it
+        if ! mysql -h "$host" -P "$port" -u "$user" ${pass:+-p"$pass"} -e "USE \`$name\`" > /dev/null 2>&1; then
+          log "Database '$name' doesn't exist, will be created during installation"
+        fi
+        
+        log "MySQL connection successful"
+      else
+        log "WARNING: mysql client not found, skipping connection test"
+      fi
+      ;;
+      
+    postgres)
+      # Set default PostgreSQL port if not specified
+      [ -z "$port" ] && port="5432"
+      
+      if command -v psql > /dev/null 2>&1; then
+        log "Testing PostgreSQL connection to $host:$port..."
+        
+        # Create temporary pgpass file to avoid password prompt
+        if [ -n "$pass" ]; then
+          PGPASS_FILE="${TEMP_DIR}/pgpass"
+          echo "$host:$port:*:$user:$pass" > "$PGPASS_FILE"
+          chmod 600 "$PGPASS_FILE"
+          export PGPASSFILE="$PGPASS_FILE"
+        fi
+        
+        if ! PGCONNECT_TIMEOUT=10 psql -h "$host" -p "$port" -U "$user" -c "SELECT 1" postgres > /dev/null 2>&1; then
+          log "ERROR: Failed to connect to PostgreSQL database"
+          [ -n "${PGPASSFILE:-}" ] && unset PGPASSFILE
+          return 1
+        fi
+        
+        # Test if database exists
+        if ! PGCONNECT_TIMEOUT=10 psql -h "$host" -p "$port" -U "$user" -c "SELECT 1" "$name" > /dev/null 2>&1; then
+          log "Database '$name' doesn't exist, will be created during installation"
+        fi
+        
+        [ -n "${PGPASSFILE:-}" ] && unset PGPASSFILE
+        log "PostgreSQL connection successful"
+      else
+        log "WARNING: psql client not found, skipping connection test"
+      fi
+      ;;
+      
+    sqlite3)
+      if command -v sqlite3 > /dev/null 2>&1; then
+        log "Testing SQLite database at $db_path"
+        
+        # For SQLite, just check if we can access or create the file
+        db_dir=$(dirname "$db_path")
+        if [ ! -d "$db_dir" ]; then
+          log "Creating SQLite database directory: $db_dir"
+          mkdir -p "$db_dir" || {
+            log "ERROR: Failed to create SQLite database directory: $db_dir"
+            return 1
+          }
+        fi
+        
+        # Test if we can write to the database
+        if [ -f "$db_path" ] && [ ! -w "$db_path" ]; then
+          log "ERROR: SQLite database file exists but is not writable: $db_path"
+          return 1
+        elif [ ! -f "$db_path" ] && [ ! -w "$db_dir" ]; then
+          log "ERROR: SQLite database directory is not writable: $db_dir"
+          return 1
+        fi
+        
+        # Test if we can open/create the database
+        if ! echo "SELECT 1;" | sqlite3 "$db_path" > /dev/null 2>&1; then
+          log "ERROR: Failed to access or create SQLite database: $db_path"
+          return 1
+        fi
+        
+        log "SQLite database test successful"
+      else
+        log "WARNING: sqlite3 client not found, skipping connection test"
+      fi
+      ;;
+  esac
+  
+  return 0
+}
+
 # Load config values - keep variables on separate lines for readability
 ADMIN_NAME="$PHPBB_USERNAME"
 ADMIN_PASS="$PHPBB_PASSWORD"
@@ -118,7 +225,9 @@ SERVER_PORT="${SERVER_PORT:-80}"
 SCRIPT_PATH="${SCRIPT_PATH:-/}"
 COOKIE_SECURE="${COOKIE_SECURE:-false}"
 
-validate_db || exit 1
+# Validate database config and test connection before installation
+validate_db_config || exit 1
+test_db_connection || exit 1
 
 # Generate YAML config - more readable format
 cat > "$CONFIG_YML" << EOF
@@ -170,8 +279,19 @@ cd "${PHPBB_ROOT}/phpbb" || { log "ERROR: Cannot access ${PHPBB_ROOT}/phpbb"; ex
 $PHP_EXECUTABLE install/phpbbcli.php install "$CONFIG_YML"
 RESULT=$?
 
-# Remove install directory if successful
-[ $RESULT -eq 0 ] && [ -d "install" ] && rm -rf "install" && log "SECURITY: Removed install dir"
+# Check if config file was properly created
+CONFIG_FILE="${PHPBB_ROOT}/phpbb/config.php"
+if [ $RESULT -eq 0 ] && [ ! -s "$CONFIG_FILE" ]; then
+  log "ERROR: Installation completed but config/config.php is empty or missing"
+  log "       This indicates that the installation process failed to write configuration data"
+  RESULT=1
+fi
+
+# Only remove install directory if installation was successful
+if [ $RESULT -eq 0 ] && [ -d "install" ]; then
+  rm -rf "install" 
+  log "SECURITY: Removed install dir after successful installation"
+fi
 
 [ -n "${TEMP_DIR:-}" ] && rm -rf "$TEMP_DIR"
 exit $RESULT
