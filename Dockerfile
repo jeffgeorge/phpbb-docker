@@ -29,7 +29,7 @@ ENV PHPBB_FORUM_NAME="My phpBB Forum" \
     SMTP_PROTOCOL="" \
     SERVER_PROTOCOL="http://" \
     SERVER_NAME="localhost" \
-    SERVER_PORT="80" \
+    SERVER_PORT="8080" \
     SCRIPT_PATH="/" \
     COOKIE_SECURE="false" \
     PHP_MEMORY_LIMIT="128M" \
@@ -160,12 +160,12 @@ RUN chmod 755 /opt/.docker/*.sh && \
 # Set working directory
 WORKDIR ${PHPBB_ROOT}
 
-# Expose port 80
-EXPOSE 80
+# Expose port 8080
+EXPOSE 8080
 
 # Add healthcheck to verify the service is running
 HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3 \
-    CMD curl -f http://localhost/ || exit 1
+    CMD curl -f http://localhost:8080/ || exit 1
 
 # Switch to non-root user for running the container
 USER phpbb
