@@ -9,8 +9,8 @@ ENV PHPBB_VERSION="${PHPBB_VERSION}"
 # phpBB configuration environment variables
 ENV PHPBB_FORUM_NAME="My phpBB Forum" \
     PHPBB_FORUM_DESCRIPTION="A phpBB Forum" \
-    PHPBB_USER="admin" \
-    PHPBB_PASS="" \
+    PHPBB_USERNAME="admin" \
+    PHPBB_PASSWORD="" \
     PHPBB_FIRST_NAME="Admin" \
     PHPBB_LAST_NAME="User" \
     PHPBB_EMAIL="admin@example.com" \

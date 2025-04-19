@@ -17,7 +17,7 @@ validate_environment() {
   local generated_password=""
   
   # Required variables list - using eval for POSIX-compatible variable indirection
-  for var in PHPBB_USER; do
+  for var in PHPBB_USERNAME; do
     eval val="\$${var}"
     if [ -z "${val:-}" ]; then
       log "ERROR: $var environment variable is not set"
@@ -26,10 +26,10 @@ validate_environment() {
   done
   
   # Generate secure password if not provided
-  if [ -z "${PHPBB_PASS:-}" ]; then
+  if [ -z "${PHPBB_PASSWORD:-}" ]; then
     # Generate a secure 16-character password with OpenSSL
     generated_password=$(openssl rand -base64 12)
-    export PHPBB_PASS="$generated_password"
+    export PHPBB_PASSWORD="$generated_password"
     log "SECURITY NOTICE: Generated secure password for admin user: $generated_password"
     log "IMPORTANT: Write down this password now as it will not be shown again!"
   fi

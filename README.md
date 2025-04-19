@@ -29,8 +29,8 @@ security.
 
 This container requires the following environment variables to be set for proper operation:
 
-- `PHPBB_USER`: Username for the administrative user (required for first installation)
-- `PHPBB_PASS`: Password for the administrative user (required for first installation)
+- `PHPBB_USERNAME`: Username for the administrative user (required for first installation)
+- `PHPBB_PASSWORD`: Password for the administrative user (required for first installation)
 
 These variables are mandatory for generating the database during first initialization.
 
@@ -49,7 +49,7 @@ These variables are mandatory for generating the database during first initializ
 
 ```bash
 docker run -d \
-  -p 80:80 \
+  -p 8080:8080 \
   -e PHPBB_FORUM_NAME="My Awesome Forum" \
   -e PHPBB_DATABASE_HOST="db" \
   -e PHPBB_DATABASE_NAME="phpbb" \
@@ -69,8 +69,8 @@ The following environment variables can be used to configure the phpBB installat
 | `PHPBB_FORUM_DESCRIPTION`                          | Description of the forum                                         | "A phpBB Forum"              |
 | `PHPBB_LANGUAGE`                                   | Language for the phpBB installation                              | "en"                         |
 | **Admin User**                                     |                                                                  |                              |
-| `PHPBB_USER`                                       | Username for the administrative user (Required)                  | "admin"                      |
-| `PHPBB_PASS`                                       | Password for the admin user (Required)                           | "" (auto-generated if empty) |
+| `PHPBB_USERNAME`                                   | Username for the administrative user (Required)                  | "admin"                      |
+| `PHPBB_PASSWORD`                                   | Password for the admin user (Required)                           | "" (auto-generated if empty) |
 | `PHPBB_FIRST_NAME`                                 | First name of the admin user                                     | "Admin"                      |
 | `PHPBB_LAST_NAME`                                  | Last name of the admin user                                      | "User"                       |
 | `PHPBB_EMAIL`                                      | Admin user email                                                 | "admin@example.com"          |
@@ -111,7 +111,7 @@ themes, extensions, and configurations:
 
 ```bash
 docker run -d \
-  -p 80:80 \
+  -p 8080:8080 \
   -v phpbb_data:/opt/phpbb \
   -e PHPBB_DATABASE_HOST="db" \
   -e PHPBB_DATABASE_NAME="phpbb" \
@@ -128,7 +128,7 @@ Alternatively, you can mount specific directories that contain important user da
 
 ```bash
 docker run -d \
-  -p 80:80 \
+  -p 8080:8080 \
   -v phpbb_config:/opt/phpbb/config \
   -v phpbb_store:/opt/phpbb/store \
   -v phpbb_files:/opt/phpbb/files \
@@ -150,7 +150,7 @@ environment variable:
 
 ```bash
 docker run -d \
-  -p 80:80 \
+  -p 8080:8080 \
   -e PHPBB_FORUM_NAME="My Community" \
   -e PHPBB_DATABASE_HOST="mysql_container" \
   -e PHPBB_DATABASE_NAME="phpbb_db" \
@@ -171,7 +171,7 @@ These directives will be appended to the PHP.ini file during container startup.
 
 ```bash
 docker run -d \
-  -p 80:80 \
+  -p 8080:8080 \
   -e PHPBB_FORUM_NAME="My Community" \
   -e PHPBB_DATABASE_DRIVER="mysqli" \
   -e PHPBB_DATABASE_HOST="mysql_container" \
@@ -185,7 +185,7 @@ docker run -d \
 
 ```bash
 docker run -d \
-  -p 80:80 \
+  -p 8080:8080 \
   -e PHPBB_FORUM_NAME="My Community" \
   -e PHPBB_DATABASE_DRIVER="postgres" \
   -e PHPBB_DATABASE_HOST="postgres_container" \
@@ -199,7 +199,7 @@ docker run -d \
 
 ```bash
 docker run -d \
-  -p 80:80 \
+  -p 8080:8080 \
   -e PHPBB_FORUM_NAME="My Community" \
   -e PHPBB_DATABASE_DRIVER="sqlite3" \
   -e PHPBB_DATABASE_SQLITE_PATH="/opt/phpbb/data/phpbb.sqlite3" \
@@ -211,7 +211,7 @@ docker run -d \
 
 ```bash
 docker run -d \
-  -p 80:80 \
+  -p 8080:8080 \
   -e PHPBB_FORUM_NAME="My Community" \
   -e PHPBB_EMAIL="admin@example.com" \
   -e SMTP_HOST="smtp.example.com" \
@@ -251,12 +251,12 @@ services:
   phpbb:
     image: evandarwin/phpbb:latest
     ports:
-      - '80:80'
+      - '8080:8080'
     environment:
       - PHPBB_FORUM_NAME=My Amazing Forum
       - PHPBB_FORUM_DESCRIPTION=Welcome to my phpBB forum
-      - PHPBB_USER=admin
-      - PHPBB_PASS=secure_password
+      - PHPBB_USERNAME=admin
+      - PHPBB_PASSWORD=secure_password
       - PHPBB_EMAIL=admin@example.com
       - PHPBB_DATABASE_DRIVER=mysqli
       - PHPBB_DATABASE_HOST=mysql
@@ -271,7 +271,7 @@ services:
       - mysql
     restart: unless-stopped
     healthcheck:
-      test: ['CMD', 'curl', '-f', 'http://localhost/']
+      test: ['CMD', 'curl', '-f', 'http://localhost:8080/']
       interval: 30s
       timeout: 5s
       retries: 3
@@ -415,7 +415,7 @@ Storing SQLite database files in publicly accessible locations presents severe s
 
 ```bash
 docker run -d \
-  -p 80:80 \
+  -p 8080:8080 \
   -e PHPBB_FORUM_NAME="My Community" \
   -e PHPBB_DATABASE_DRIVER="sqlite3" \
   -e PHPBB_DATABASE_SQLITE_PATH="/var/lib/phpbb/data/phpbb.sqlite3" \

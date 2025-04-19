@@ -4,7 +4,7 @@ log() { echo "[phpbb-docker] $1"; }
 trap 'log "ERROR at line $LINENO"; [ -n "${TEMP_DIR:-}" ] && rm -rf "$TEMP_DIR"' ERR
 
 # Check required vars and fail fast
-for var in PHPBB_USER PHPBB_PASS; do
+for var in PHPBB_USERNAME PHPBB_PASSWORD; do
   # Fix: using eval to get variable value in POSIX sh instead of ${!var:-}
   eval "val=\$$var"
   [ -z "${val:-}" ] && log "ERROR: $var not set" && exit 1
@@ -79,8 +79,8 @@ validate_db() {
 }
 
 # Load config values - keep variables on separate lines for readability
-ADMIN_NAME="$PHPBB_USER"
-ADMIN_PASS="$PHPBB_PASS"
+ADMIN_NAME="$PHPBB_USERNAME"
+ADMIN_PASS="$PHPBB_PASSWORD"
 ADMIN_EMAIL="${PHPBB_EMAIL:-admin@example.com}"
 
 BOARD_NAME="${PHPBB_FORUM_NAME:-My Board}"
