@@ -1,0 +1,163 @@
+name: Build and Publish Docker Image
+
+on:
+  push:
+    branches:
+      - main
+    tags:
+      - 'v*'
+  pull_request:
+    branches: 
+      - main
+  workflow_dispatch:
+
+# Add concurrency to cancel duplicate runs
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  IMAGE_NAME: evandarwin/phpbb
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+      id-token: write # Required for SLSA provenance
+      security-events: write # For uploading SARIF results
+      actions: read
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # Setup Docker Buildx
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      # Login to Docker Hub
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        if: github.event_name != 'pull_request'
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      # Extract metadata (tags, labels) for Docker
+      - name: Extract Docker metadata
+        id: meta
+        uses: docker/metadata-action@v4
+        with:
+          images: ${{ env.IMAGE_NAME }}
+          tags: |
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=semver,pattern={{major}}
+            type=ref,event=branch
+            type=ref,event=pr
+            type=sha
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      # Get the latest phpBB version from GitHub for auto tagging with improved error handling
+      - name: Get latest phpBB version
+        id: phpbb-version
+        run: |
+          # Set a default version in case the API call fails
+          echo "version=3.3.10" >> $GITHUB_OUTPUT
+          echo "version_major=3" >> $GITHUB_OUTPUT
+          echo "version_minor=3" >> $GITHUB_OUTPUT
+          
+          # Attempt to get the latest version
+          VERSION=$(curl -s --fail https://api.github.com/repos/phpbb/phpbb/tags || echo '{"error": "Failed to fetch tags"}')
+          
+          # Check if the curl request was successful
+          if [[ "$VERSION" == *"error"* ]]; then
+            echo "::warning::Failed to fetch phpBB tags, using default version"
+          else
+            VERSION=$(echo "$VERSION" | \
+              grep -o '"name": "[^"]*"' | \
+              grep '"name": "release-' | \
+              grep -v 'RC' | \
+              head -1 | \
+              sed 's/"name": "release-//;s/"//g' || echo "3.3.10")
+            
+            # If we successfully found a version, parse it
+            if [[ -n "$VERSION" ]]; then
+              echo "version=${VERSION}" >> $GITHUB_OUTPUT
+              
+              # Extract major and minor versions for tagging
+              VERSION_MAJOR=$(echo $VERSION | cut -d. -f1)
+              VERSION_MINOR=$(echo $VERSION | cut -d. -f2)
+              
+              echo "version_major=${VERSION_MAJOR}" >> $GITHUB_OUTPUT
+              echo "version_minor=${VERSION_MINOR}" >> $GITHUB_OUTPUT
+              echo "[docker-phpbb] Found phpBB version: ${VERSION} (${VERSION_MAJOR}.${VERSION_MINOR})"
+            else
+              echo "::warning::Could not parse phpBB version from API response, using default version"
+            fi
+          fi
+      
+      # Set the PHP version and prepare tag format
+      - name: Set image name with PHP and phpBB versions
+        id: image-name
+        run: |
+          PHP_VERSION=84
+          PHPBB_VERSION="${{ steps.phpbb-version.outputs.version }}"
+          PHPBB_VERSION_MAJOR="${{ steps.phpbb-version.outputs.version_major }}"
+          PHPBB_VERSION_MINOR="${{ steps.phpbb-version.outputs.version_minor }}"
+          
+          # Generate version-specific image name
+          VERSIONED_IMAGE="${{ env.IMAGE_NAME }}:${PHPBB_VERSION}"
+          MAJOR_VERSION_TAG="${{ env.IMAGE_NAME }}:${PHPBB_VERSION_MAJOR}"
+          MINOR_VERSION_TAG="${{ env.IMAGE_NAME }}:${PHPBB_VERSION_MAJOR}.${PHPBB_VERSION_MINOR}"
+          
+          # Add custom tags
+          echo "versioned_image=${VERSIONED_IMAGE}" >> $GITHUB_OUTPUT
+          echo "major_version_tag=${MAJOR_VERSION_TAG}" >> $GITHUB_OUTPUT
+          echo "minor_version_tag=${MINOR_VERSION_TAG}" >> $GITHUB_OUTPUT
+          
+          # For debugging
+          echo "Setting image tag: ${VERSIONED_IMAGE}"
+          echo "Major version tag: ${MAJOR_VERSION_TAG}"
+          echo "Minor version tag: ${MINOR_VERSION_TAG}"
+
+      # Build and push Docker image with Buildx
+      - name: Build and push Docker image
+        id: build-and-push
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: |
+            ${{ steps.meta.outputs.tags }}
+            ${{ steps.image-name.outputs.versioned_image }}
+            ${{ steps.image-name.outputs.major_version_tag }}
+            ${{ steps.image-name.outputs.minor_version_tag }}
+          labels: ${{ steps.meta.outputs.labels }}
+          build-args: |
+            PHPBB_VERSION=${{ steps.phpbb-version.outputs.version }}
+            PHP_VERSION=84
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          provenance: true
+          sbom: true
+          platforms: linux/amd64,linux/arm64
+
+      # Scan the image for vulnerabilities - with set version instead of master branch
+      - name: Scan for vulnerabilities
+        uses: aquasecurity/trivy-action@0.30.0
+        with:
+          image-ref: ${{ steps.image-name.outputs.versioned_image }}
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+          severity: 'CRITICAL,HIGH'
+          timeout: '10m'
+          exit-code: '0'  # Don't fail the build on vulnerabilities
+
+      # Upload scan results to GitHub Security tab - show for all runs, including PRs
+      - name: Upload Trivy scan results to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: 'trivy-results.sarif'

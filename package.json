@@ -1,0 +1,22 @@
+{
+  "name": "docker-phpbb",
+  "version": "1.0.0",
+  "description": "Docker image for phpBB",
+  "main": "index.js",
+  "scripts": {
+    "build": "sh ./scripts/build.sh",
+    "format": "prettier --write \"**/*.{yml,yaml,md}\"",
+    "format:check": "prettier --check \"**/*.{yml,yaml,md}\"",
+    "lint": "npm run format:check"
+  },
+  "keywords": [
+    "docker",
+    "phpbb",
+    "forum"
+  ],
+  "author": "Evan Darwin",
+  "license": "MIT",
+  "devDependencies": {
+    "prettier": "^3.1.0"
+  }
+}

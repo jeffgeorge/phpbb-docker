@@ -1,0 +1,19 @@
+# Build artifacts
+dist/
+build/
+
+# Dependencies
+node_modules/
+
+# Logs
+*.log
+
+# Docker files
+Dockerfile
+
+# Generated files
+package-lock.json
+yarn.lock
+
+# Other
+.github/workflows/*.yml
