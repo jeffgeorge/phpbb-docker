@@ -57,7 +57,6 @@ jobs:
             type=semver,pattern={{major}}
             type=ref,event=branch
             type=ref,event=pr
-            type=sha
             type=raw,value=latest,enable={{is_default_branch}}
 
       # Get the latest phpBB version from GitHub for auto tagging with improved error handling
