@@ -41,15 +41,14 @@ RUN addgroup -S phpbb && \
     mkdir -p ${PHPBB_ROOT} /opt/.docker && \
     chown -R phpbb:phpbb ${PHPBB_ROOT}
 
-# Install required packages - using Alpine package format (php84-*)
-# Group packages by functionality for better organization
+# Group packages by functionality for better organization and layer efficiency
 RUN apk update && \
-    # Install PHP with required extensions
+    # Core PHP packages
     apk add --virtual .php-deps --no-cache \
     php${PHP_VERSION} \
     php${PHP_VERSION}-cli \
     php${PHP_VERSION}-fpm \
-    php${PHP_VERSION}-gd \
+    # Database drivers
     php${PHP_VERSION}-pdo \
     php${PHP_VERSION}-pdo_mysql \
     php${PHP_VERSION}-pdo_pgsql \
@@ -57,6 +56,8 @@ RUN apk update && \
     php${PHP_VERSION}-mysqli \
     php${PHP_VERSION}-sqlite3 \
     php${PHP_VERSION}-pgsql \
+    # Content processing
+    php${PHP_VERSION}-gd \
     php${PHP_VERSION}-curl \
     php${PHP_VERSION}-mbstring \
     php${PHP_VERSION}-sodium \
@@ -66,6 +67,7 @@ RUN apk update && \
     php${PHP_VERSION}-exif \
     php${PHP_VERSION}-fileinfo \
     php${PHP_VERSION}-dom \
+    # Performance and security
     php${PHP_VERSION}-opcache \
     php${PHP_VERSION}-session \
     php${PHP_VERSION}-simplexml \
@@ -74,6 +76,7 @@ RUN apk update && \
     php${PHP_VERSION}-tokenizer \
     php${PHP_VERSION}-intl \
     php${PHP_VERSION}-pecl-imagick && \
+    # Install web server, tools, and database clients (needed for runtime)
     apk add --no-cache \
     nginx \
     curl \
@@ -83,6 +86,7 @@ RUN apk update && \
     mysql-client \
     postgresql-client \
     sqlite && \
+    # Cleanup to reduce layer size
     rm -rf /var/cache/apk/*
 
 # Configure PHP-FPM and security settings
@@ -91,9 +95,9 @@ RUN sed -i "s/user = nobody/user = phpbb/g" /etc/php${PHP_VERSION}/php-fpm.d/www
     sed -i "s/;listen.owner = nobody/listen.owner = phpbb/g" /etc/php${PHP_VERSION}/php-fpm.d/www.conf && \
     sed -i "s/;listen.group = nobody/listen.group = phpbb/g" /etc/php${PHP_VERSION}/php-fpm.d/www.conf && \
     echo "security.limit_extensions = .php" >> /etc/php${PHP_VERSION}/php-fpm.d/www.conf && \
-    \
+    # Allow nginx to bind to privileged ports
     setcap cap_net_bind_service=+ep /usr/sbin/nginx && \
-    \
+    # Optimize PHP with opcache for better performance
     echo "opcache.memory_consumption=128" >> /etc/php${PHP_VERSION}/conf.d/00_opcache.ini && \
     echo "opcache.interned_strings_buffer=8" >> /etc/php${PHP_VERSION}/conf.d/00_opcache.ini && \
     echo "opcache.max_accelerated_files=4000" >> /etc/php${PHP_VERSION}/conf.d/00_opcache.ini && \
@@ -110,7 +114,7 @@ RUN sed -i "s/user = nobody/user = phpbb/g" /etc/php${PHP_VERSION}/php-fpm.d/www
     echo "memory_limit = 128M" >> /etc/php${PHP_VERSION}/php.ini && \
     echo "post_max_size = 32M" >> /etc/php${PHP_VERSION}/php.ini && \
     echo "upload_max_filesize = 24M" >> /etc/php${PHP_VERSION}/php.ini && \
-    \
+    # Create necessary directories with proper permissions
     mkdir -p /var/lib/nginx /var/log/nginx /var/log/php${PHP_VERSION} /run/nginx && \
     chown -R phpbb:phpbb /var/lib/nginx /var/log/nginx /var/log/php${PHP_VERSION} /run/nginx && \
     touch /run/nginx.pid && \
@@ -130,24 +134,31 @@ RUN if [ -z "${PHPBB_VERSION}" ]; then \
     if [ -z "${MAJOR_MINOR_VERSION}" ]; then \
     echo "ERROR: Could not extract major.minor version from ${PHPBB_VERSION}" && exit 1; \
     fi && \
+    # Download and extract phpBB
     DOWNLOAD_URL="https://download.phpbb.com/pub/release/${MAJOR_MINOR_VERSION}/${PHPBB_VERSION}/phpBB-${PHPBB_VERSION}.zip" && \
     echo "Downloading from: ${DOWNLOAD_URL}" && \
     cd /tmp && \
     curl -L -o phpbb.zip "${DOWNLOAD_URL}" && \
     unzip phpbb.zip && \
     rm phpbb.zip && \
+    # Move files to destination and set up directories
     mkdir -p ${PHPBB_ROOT}/phpbb && \
     mv "phpBB3"/* ${PHPBB_ROOT}/phpbb/ && \
     rm -rf "phpBB3" && \
+    mkdir -p ${PHPBB_ROOT}/phpbb/config && \
+    touch ${PHPBB_ROOT}/phpbb/config/config.php && \
     chown -R phpbb:phpbb ${PHPBB_ROOT} && \
+    # Set base permissions
     chmod -v 0750 ${PHPBB_ROOT} ${PHPBB_ROOT}/phpbb ${PHPBB_ROOT}/phpbb/* && \
     mkdir -p ${PHPBB_ROOT}/phpbb/images/avatars/uploads && \
+    # Set writable directory permissions
     chmod -v 0770 ${PHPBB_ROOT}/phpbb/store ${PHPBB_ROOT}/phpbb/cache ${PHPBB_ROOT}/phpbb/files ${PHPBB_ROOT}/phpbb/images/avatars/uploads/ && \
     chmod 0640 ${PHPBB_ROOT}/phpbb/config/config.php && \
-    mkdir -p ${PHPBB_ROOT}/phpbb/cache && \
+    # Set subdirectory permissions
     find ${PHPBB_ROOT}/phpbb/cache -type d -exec chmod 750 {} \; && \
     find ${PHPBB_ROOT}/phpbb/store -type d -exec chmod 750 {} \; 2>/dev/null || true && \
     find ${PHPBB_ROOT}/phpbb/files -type d -exec chmod 750 {} \; 2>/dev/null || true && \
+    # Make vendor directory read-only for security
     if [ -d "${PHPBB_ROOT}/phpbb/vendor" ]; then \
     chmod -R 555 "${PHPBB_ROOT}/phpbb/vendor" && \
     echo "SECURITY: Vendor directory is now properly protected (read-only)"; \
