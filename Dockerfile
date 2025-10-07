@@ -1,6 +1,8 @@
 FROM alpine:edge
 
 ARG PHPBB_VERSION
+ARG PUID=100
+ARG PGID=101
 ENV PHP_VERSION="${PHP_VERSION:-8.4}"
 ENV PHP_VERSION="${PHP_VERSION/./}"
 ENV PHPBB_ROOT="/opt/phpbb"
@@ -36,8 +38,8 @@ ENV PHPBB_FORUM_NAME="My phpBB Forum" \
     PHP_CUSTOM_INI=""
 
 # Create non-root user for running the application
-RUN addgroup -S phpbb && \
-    adduser -S -G phpbb -H -h ${PHPBB_ROOT} phpbb && \
+RUN addgroup -S -g ${PGID} phpbb && \
+    adduser -S -u ${PUID} -G phpbb -H -h ${PHPBB_ROOT} phpbb && \
     mkdir -p ${PHPBB_ROOT} /opt/.docker && \
     chown -R phpbb:phpbb ${PHPBB_ROOT}
 

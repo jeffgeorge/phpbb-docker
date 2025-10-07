@@ -78,8 +78,12 @@ log "  PHP version     :: 8.4"
 log "  Alpine version  :: edge"
 log "  image name      :: $DOCKER_IMAGE:$VERSION"
 
+# Set UID/GID strings
+PUID="${PUID:-100}"
+PGID="${PGID:-101}"
+
 # Set build args
-BUILD_ARGS="--build-arg PHPBB_VERSION=$VERSION --build-arg PHP_VERSION=84 --build-arg ALPINE_VERSION=edge"
+BUILD_ARGS="--build-arg PHPBB_VERSION=$VERSION --build-arg PHP_VERSION=84 --build-arg PUID=$PUID --build-arg PGID=$PGID --build-arg ALPINE_VERSION=edge"
 
 # Build the Docker image
 docker build \
