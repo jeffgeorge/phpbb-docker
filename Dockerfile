@@ -109,7 +109,7 @@ RUN sed -i "s/user = nobody/user = phpbb/g" /etc/php${PHP_VERSION}/php-fpm.d/www
     echo "opcache.validate_timestamps=1" >> /etc/php${PHP_VERSION}/conf.d/00_opcache.ini && \
     echo "opcache.save_comments=1" >> /etc/php${PHP_VERSION}/conf.d/00_opcache.ini && \
     # Set PHP security configuration
-    echo "disable_functions = exec,passthru,shell_exec,system,proc_open,popen,curl_exec,curl_multi_exec,parse_ini_file,show_source,eval" >> /etc/php${PHP_VERSION}/php.ini && \
+    echo "disable_functions = exec,passthru,shell_exec,system,proc_open,popen,curl_multi_exec,parse_ini_file,show_source,eval" >> /etc/php${PHP_VERSION}/php.ini && \
     echo "open_basedir = ${PHPBB_ROOT}:/tmp" >> /etc/php${PHP_VERSION}/php.ini && \
     echo "expose_php = Off" >> /etc/php${PHP_VERSION}/php.ini && \
     echo "max_execution_time = 30" >> /etc/php${PHP_VERSION}/php.ini && \
